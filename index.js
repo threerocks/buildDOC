@@ -2,7 +2,7 @@
 var appInfo = require('./package.json');
 var program = require('commander');
 var fs = require('fs');
-var build = require('./buildDOC');
+var build = require('./createDOC');
 require('shelljs/global');
 program.allowUnknownOption();
 program.version(appInfo.version);
