@@ -80,8 +80,7 @@ module.exports = function(sequelize, DataTypes) {
    			allowNull: false
    		}
    	}, {
-   		tableName: 'test
-      _zk_absence'
+   		tableName: 'test_zk_absence'
    	});
    };
 ```
