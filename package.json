@@ -1,0 +1,22 @@
+{
+  "name": "createDOC",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node buildDOC.js",
+    "createSchemas": "node buildSchemas.js"
+  },
+  "bin": {
+    "buildDOC": "./index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "commander": "^2.9.0",
+    "linebyline": "^1.3.0",
+    "shelljs": "^0.7.3"
+  }
+}

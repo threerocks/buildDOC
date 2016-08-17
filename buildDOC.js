@@ -1,23 +1,24 @@
 var fs = require('fs'),
     path = require('path'),
     readline = require('linebyline'),
-    config = require('./common/config'),
     markdownBuild = require('./src/MarkdownBuild');
 var fileNumber = 0;
 var fileCount = 0;
 var data = {};
-fs.readdir('./models', function (err, files) {
-  if (err) {
-    throw err;
-  } else {
-    fileNumber = files.length;
-    for (var file of files) {
-      build(config.path + file);
+exports.buildDOC = function (path, markdown) {
+  fs.readdir(path, function (err, files) {
+    if (err) {
+      throw err;
+    } else {
+      fileNumber = files.length;
+      for (var file of files) {
+        build(path + file, markdown);
+      }
     }
-  }
-});
+  });
+};
 
-function build(file) {
+function build(file, markdown) {
   var lines = [];
   var r = readline(file);
   r.on('line', function (line, lineCount, byteCount) {
@@ -29,7 +30,7 @@ function build(file) {
     })
     .on('end', function () {
       console.log(fileCount + '、 正在处理' + path.basename(file, '.js') + '...');
-      createObject(lines, file);
+      createObject(lines, file, markdown);
       lines = [];
       console.log('处理完毕')
     });
@@ -39,7 +40,7 @@ function removeSymbol(code) {
   var result = code.replace(/[\s\\,\']/g, '');
   return result;
 }
-function createObject(lines, file) {
+function createObject(lines, file, markdown) {
   //删除掉第一个'{'出现之前的内容,避免有其他信息混入。
   for (var i in lines) {
     if (/\{/.test(lines[i])) {
@@ -101,6 +102,6 @@ function createObject(lines, file) {
   data[tableName] = schemaData;
   fileCount++;
   if(fileCount === fileNumber){
-    markdownBuild(data);
+    return markdownBuild(data, markdown);
   }
 }
