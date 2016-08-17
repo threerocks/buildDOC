@@ -5,7 +5,7 @@ exec('cd ../..', (error, stdout, stderr) => {
     console.error(`exec error: ${error}`);
     return;
   }
-  exec('buildDOC run', function (err) {
+  exec('createDOC run', function (err) {
     if(err){
       console.error(`exec error: ${err}`);
       return;
