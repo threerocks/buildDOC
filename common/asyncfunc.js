@@ -1,6 +1,7 @@
 const Promise = require('bluebird'),
   fs = Promise.promisifyAll(require('fs')),
-  path = require('path');
+  path = require('path'),
+  co = require('co');
 
 const craete = require('./../src/createDOC');
 
@@ -86,5 +87,26 @@ exports.modifyhookAction = function*() {
   }
 };
 
+//遍历目录文件,包括子目录
+exports.getAllFiles = getFiles;
+function* getFiles(dir) {
+  try{
+    var filesArr = [];
+    var files = yield fs.readdirAsync(dir);
+    for(const file of files){
+      var pathName = dir + file;
+      var info = yield fs.statAsync(pathName);
+      if(info.isDirectory()){
+        filesArr = filesArr.concat(yield getFiles(pathName + '/'));
+      }
+      if(path.extname(file) === '.js' ){
+        filesArr.push(dir + file);
+      }
+    }
+    return filesArr;
+  }catch (err){
+    console.log(err);
+  }
+}
 
 

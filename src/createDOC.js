@@ -1,21 +1,21 @@
-const Promise = require('bluebird'),
-  fs = Promise.promisifyAll(require('fs')),
-  path = require('path'),
+const path = require('path'),
   readline = require('linebyline');
 
-const markdownBuild = require('./MarkdownBuild');
+const markdownBuild = require('./MarkdownBuild'),
+  asyncfunc = require('./../common/asyncfunc'),
+  func = require('./../common/func');
 
-var fileNumber = 0;
-var fileCount = 0;
-var data = {};
+var fileNumber = 0; //需处理的文件总数
+var fileCount = 0; //处理文件计数
+var data = {}; //所有表格整体数据
 
-//exports.createDOC = function* (path, markdown) {
-function* createDOC(path, markdown) {
+exports.createDOC = function* (path, markdown) {
+//function* createDOC(path, markdown) {
   try{
-    const files = yield fs.readdirAsync(path);
+    const files = yield asyncfunc.getAllFiles(path);
     fileNumber = files.length;
     for (const file of files) {
-      build(path + file, markdown);
+      build(file, markdown);
     }
   }catch (err){
     console.log(err);
@@ -38,6 +38,7 @@ function build(file, markdown) {
       throw e;
     })
     .on('end', function () {
+      console.log(lines);
       console.log(fileCount + '、 正在处理' + path.basename(file, '.js') + '...');
       createObject(lines, file, markdown);
       console.log('处理完毕')
@@ -45,38 +46,29 @@ function build(file, markdown) {
 }
 
 function createObject(lines, file, markdown) {
-  if(/^\./.test(path.basename(file))){
-    fileNumber--;
-    return;
-  }
-  //删除掉第一个'{'出现之前的内容,避免有其他信息混入。
-  for (const i in lines) {
-    if (/\{/.test(lines[i])) {
-      if (/\/\//.test(lines[i])) {
-        continue;
-      }
-      lines.splice(0, i);
-      break;
-    }
-  }
-  const schemaData = {};
-  var tableName = '';
-  var count = 0;
-  var description = '';
+  func.clearHeader(lines); //去掉头部注释和其他无用信息,注意此函数以'{'为结尾删除元素。
+  func.attributesExists(lines);//如果存在attributes属性,删掉该条元素。
+
+  const singleTableData = {}; //单表数据存储
+  var tableName = ''; //当前表格名称
+
+  var count = 0; //遍历计数
+  var description = '';  //字段描述
+
   while (count < lines.length) {
+    //判断是否属于 '//' 类型注释,是否属于 '/* */'类型注释,是否为key,value,并分别做处理
     if (/\/\/.*/.test(lines[count])) {
       description = lines[count].replace(/\/\//, '');
       count++;
       continue;
-    }
-    else if (/\/\*[\s\S]*?/.test(lines[count])) {
-      var start = count;
+    } else if (/\/\*[\s\S]*?/.test(lines[count])) {
+      start = count;
       lines[count] = lines[count].replace(/\/\*/, '');
       while (!/[\s\S]*?\*\//.test(lines[count])) {
         count++;
       }
       lines[count] = lines[count].replace(/\*\//, '');
-      var end = count;
+      end = count;
       description = '<pre>' + lines.slice(start, end + 1).join('<br>') + '</pre>';
       count++;
       continue;
@@ -92,12 +84,14 @@ function createObject(lines, file, markdown) {
         if (childKey === 'type') {
           childValue = childValue.split('.')[1] || childValue
         }
+        console.log(childValue)
         value[childKey] = removeSymbol(childValue);
+
         count++;
       }
       value.description = description;
       description = '';
-      schemaData[key] = value;
+      singleTableData[key] = value;
       count++;
       continue;
     } else if (/\:/.test(lines[count])) {
@@ -106,7 +100,7 @@ function createObject(lines, file, markdown) {
       value.type = removeSymbol(lines[count].split(':')[1]);
       value.description = description;
       description = '';
-      schemaData[key] = value;
+      singleTableData[key] = value;
       count++;
       continue;
     } else {
@@ -119,12 +113,11 @@ function createObject(lines, file, markdown) {
   if (tableName === '') {
     tableName = path.basename(file, '.js')
   }
-  data[tableName] = schemaData;
+  data[tableName] = singleTableData;
   fileCount++;
   if (fileCount === fileNumber) {
     console.log(typeof markdownBuild.build);
     return markdownBuild.build(data, markdown);
   }
 }
-
 

@@ -40,6 +40,45 @@ exports.spaceToFalse = function (str) {
   }
 };
 
+//删除掉第一个'{'出现之前的内容,避免有其他信息混入。
+exports.clearHeader = function (lines) {
+  for (const i in lines) {
+    if(/\/\/.*/.test(lines[i])){
+      lines.splice(i, i);
+      continue;
+    }
+    if(/\/\*[\s\S]*?/.test(lines[i])){
+      var start = i;
+      var end = i;
+      while (!/[\s\S]*?\*\//.test(lines[end])) {
+        end++;
+      }
+      lines.splice(start, end + 1);
+      continue;
+    }
+    if (/\{/.test(lines[i])) {
+      if (/\/\//.test(lines[i])) {
+        continue;
+      }
+      lines.splice(0, i);
+      break;
+    }
+  }
+  return lines;
+};
+//查看是否含有'attributes: {',如果有则删掉之前的元素
+exports.attributesExists = function (lines) {
+  for (const i in lines) {
+    if (/attributes\:\s?\{/.test(lines[i])){
+      lines.splice(0, i + 1);
+      break;
+    }
+  }
+  return lines;
+};
+
+
+
 //type转换
 exports.typeTransform = function (type) {
   switch (type) {
