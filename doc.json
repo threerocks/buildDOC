@@ -1,6 +1,5 @@
 {
-  "schemas":"/Users/mac/Desktop/testssss/models/",
-  //"schemas":"/Users/mac/Desktop/testssss/schemas/",
+  "schemas":"/Users/mac/Desktop/testssss/schemas/",
   "markdown": {
     "path": "/Users/mac/Desktop/",
     "file": "dbDocument.md"

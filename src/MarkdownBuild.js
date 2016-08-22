@@ -4,7 +4,7 @@
 const fs = require('fs');
 const func = require('../common/func');
 
-exports.build = function (tables, markdown) {
+exports.dbbuild = function (tables, markdown) {
   var text = '# 数据库文档\n\n';
   const tableHeader =
     '|字段|类型|允许为空|是否主键|是否自增|说明|\n' +
@@ -43,3 +43,6 @@ exports.build = function (tables, markdown) {
 };
 
 
+exports.routerbuild = function (tables, markdown) {
+
+};

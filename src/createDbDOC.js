@@ -22,8 +22,11 @@ exports.createDOC = function* (path, markdown) {
 };
 
 function removeSymbol(code) {
-  const result = code.replace(/[\s\,\']/g, '');
-  return result;
+  //console.log(typeof(code))
+  if(typeof(code) == 'string'){
+    const result = code.replace(/[\s\,\']/g, '');
+    return result;
+  }
 }
 
 function build(file, markdown) {
@@ -91,12 +94,16 @@ function createObject(lines, file, markdown) {
       count++;
       continue;
     } else if (/\:/.test(lines[count])) {
-      var key = lines[count].split(':')[0];
+      var child = lines[count].split(':');
+      var childKey = child[0];
+      var childValue = child[1];
+      childValue = childValue.split('.')[1] || childValue;
+      console.log(childValue)
       var value = {};
-      value.type = removeSymbol(lines[count].split(':')[1]);
+      value.type = removeSymbol(childValue);
       value.description = description;
       description = '';
-      singleTableData[key] = value;
+      singleTableData[childKey] = value;
       count++;
       continue;
     } else {
@@ -112,6 +119,6 @@ function createObject(lines, file, markdown) {
   data[tableName] = singleTableData;
   fileCount++;
   if (fileCount === fileNumber) {
-    return markdownBuild.build(data, markdown);
+    return markdownBuild.dbbuild(data, markdown);
   }
 }

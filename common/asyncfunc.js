@@ -3,7 +3,7 @@ const Promise = require('bluebird'),
   path = require('path'),
   co = require('co');
 
-const craete = require('./../src/createDOC');
+const craete = require('./../src/createDbDOC');
 
 
 function* modifyHook(file) {
