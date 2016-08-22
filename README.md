@@ -91,3 +91,5 @@ module.exports = function(sequelize, DataTypes) {
 1. 代码逻辑优化，适应力更强。
 2. 代码速度、质量优化。
 3. 增加路由、代码、注释文档生成功能。
+
+[github地址](https://github.com/a1511870876/buildDOC)

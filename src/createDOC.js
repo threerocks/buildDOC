@@ -1,57 +1,68 @@
-var fs = require('fs'),
-    path = require('path'),
-    readline = require('linebyline'),
-    markdownBuild = require('./src/MarkdownBuild');
+const Promise = require('bluebird'),
+  fs = Promise.promisifyAll(require('fs')),
+  path = require('path'),
+  readline = require('linebyline');
+
+const markdownBuild = require('./MarkdownBuild');
+
 var fileNumber = 0;
 var fileCount = 0;
 var data = {};
-exports.buildDOC = function (path, markdown) {
-  fs.readdir(path, function (err, files) {
-    if (err) {
-      throw err;
-    } else {
-      fileNumber = files.length;
-      for (var file of files) {
-        build(path + file, markdown);
-      }
+
+//exports.createDOC = function* (path, markdown) {
+function* createDOC(path, markdown) {
+  try{
+    const files = yield fs.readdirAsync(path);
+    fileNumber = files.length;
+    for (const file of files) {
+      build(path + file, markdown);
     }
-  });
+  }catch (err){
+    console.log(err);
+  }
 };
 
-function build(file, markdown) {
-  var lines = [];
-  var r = readline(file);
-  r.on('line', function (line, lineCount, byteCount) {
-    lines.push(removeSymbol(line));
+function removeSymbol(code) {
+  const result = code.replace(/[\s\,\']/g, '');
+  return result;
+}
 
-  })
+function build(file, markdown) {
+  const lines = [];
+  const read = readline(file);
+  read
+    .on('line', function (line, lineCount, byteCount) {
+      lines.push(removeSymbol(line));
+    })
     .on('error', function (e) {
       throw e;
     })
     .on('end', function () {
       console.log(fileCount + '、 正在处理' + path.basename(file, '.js') + '...');
       createObject(lines, file, markdown);
-      lines = [];
       console.log('处理完毕')
     });
 }
 
-function removeSymbol(code) {
-  var result = code.replace(/[\s\\,\']/g, '');
-  return result;
-}
 function createObject(lines, file, markdown) {
+  if(/^\./.test(path.basename(file))){
+    fileNumber--;
+    return;
+  }
   //删除掉第一个'{'出现之前的内容,避免有其他信息混入。
-  for (var i in lines) {
+  for (const i in lines) {
     if (/\{/.test(lines[i])) {
+      if (/\/\//.test(lines[i])) {
+        continue;
+      }
       lines.splice(0, i);
       break;
     }
   }
   const schemaData = {};
   var tableName = '';
-  var description = '';
   var count = 0;
+  var description = '';
   while (count < lines.length) {
     if (/\/\/.*/.test(lines[count])) {
       description = lines[count].replace(/\/\//, '');
@@ -78,12 +89,21 @@ function createObject(lines, file, markdown) {
         var child = lines[count].split(':');
         var childKey = child[0];
         var childValue = child[1];
-        if(childKey === 'type'){
+        if (childKey === 'type') {
           childValue = childValue.split('.')[1] || childValue
         }
         value[childKey] = removeSymbol(childValue);
         count++;
       }
+      value.description = description;
+      description = '';
+      schemaData[key] = value;
+      count++;
+      continue;
+    } else if (/\:/.test(lines[count])) {
+      var key = lines[count].split(':')[0];
+      var value = {};
+      value.type = removeSymbol(lines[count].split(':')[1]);
       value.description = description;
       description = '';
       schemaData[key] = value;
@@ -96,12 +116,15 @@ function createObject(lines, file, markdown) {
       tableName = lines[count].split(':')[1];
     }
   }
-  if(tableName === '') {
+  if (tableName === '') {
     tableName = path.basename(file, '.js')
   }
   data[tableName] = schemaData;
   fileCount++;
-  if(fileCount === fileNumber){
-    return markdownBuild(data, markdown);
+  if (fileCount === fileNumber) {
+    console.log(typeof markdownBuild.build);
+    return markdownBuild.build(data, markdown);
   }
 }
+
+

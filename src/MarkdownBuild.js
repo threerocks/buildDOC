@@ -4,7 +4,7 @@
 const fs = require('fs');
 const func = require('../common/func');
 
-module.exports = function (tables, markdown) {
+exports.build = function (tables, markdown) {
   var text = '# 数据库文档\n\n';
   const tableHeader =
     '|字段|类型|允许为空|是否主键|是否自增|说明|\n' +
@@ -35,7 +35,7 @@ module.exports = function (tables, markdown) {
   }
 
   //写入文件
-  fs.writeFile(markdown.path + markdown.file , text, function (err) {
+  fs.writeFile(markdown.path + markdown.file , text, (err) => {
     if (err) throw err;
     console.log('It\'s saved!'); //文件被保存
     return true;
