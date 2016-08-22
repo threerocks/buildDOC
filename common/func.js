@@ -42,7 +42,7 @@ exports.spaceToFalse = function (str) {
 
 //删除掉第一个'{'出现之前的内容,避免有其他信息混入。
 exports.clearHeader = function (lines) {
-  for (const i in lines) {
+  for (var i in lines) {
     if(/\/\/.*/.test(lines[i])){
       lines.splice(i, i);
       continue;
@@ -68,7 +68,7 @@ exports.clearHeader = function (lines) {
 };
 //查看是否含有'attributes: {',如果有则删掉之前的元素
 exports.attributesExists = function (lines) {
-  for (const i in lines) {
+  for (var i in lines) {
     if (/attributes\:\s?\{/.test(lines[i])){
       lines.splice(0, i + 1);
       break;

@@ -5,8 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "webpack --watch -p -colors --display-error-details --progress",
-    "devwatch": "webpack --watch -colors --display-error-details --progress",
     "start": "node ./index.js"
   },
   "bin": {
@@ -30,8 +28,7 @@
     "bluebird": "^3.4.1",
     "co": "^4.6.0",
     "commander": "^2.9.0",
-    "linebyline": "^1.3.0",
-    "shelljs": "^0.7.3"
+    "linebyline": "^1.3.0"
   },
   "devDependencies": {}
 }

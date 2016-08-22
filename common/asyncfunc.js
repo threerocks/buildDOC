@@ -34,7 +34,7 @@ exports.showAction = function*() {
       console.log(`
     查找doc.json成功!
     路径:${process.cwd()}/doc.json
-    输入(schemas路径):${doc.schemas})
+    输入(schemas路径):${doc.schemas}
     输出路径:${doc.markdown.path}
     输出文件名:${doc.markdown.file}`);
       return;
@@ -93,7 +93,7 @@ function* getFiles(dir) {
   try{
     var filesArr = [];
     var files = yield fs.readdirAsync(dir);
-    for(const file of files){
+    for(var file of files){
       var pathName = dir + file;
       var info = yield fs.statAsync(pathName);
       if(info.isDirectory()){
