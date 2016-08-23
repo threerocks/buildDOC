@@ -4,7 +4,8 @@ const Promise = require('bluebird'),
   co = require('co');
 
 const craeteDb = require('./../src/createDbDOC'),
-  createRouter = require('./../src/createRouterDOC');
+  createRouter = require('./../src/createRouterDOC'),
+  func = require('./func');
 
 
 function* modifyHook(file) {
@@ -35,9 +36,15 @@ exports.showAction = function*() {
       console.log(`
     查找doc.json成功!
     路径:${process.cwd()}/doc.json
-    输入(schemas路径):${doc.schemas}
-    输出路径:${doc.markdown.path}
-    输出文件名:${doc.markdown.file}`);
+    db:
+    db输入目录(schemas):${doc.db.schemas}
+    db文档输出路径:${doc.db.markdown.path}
+    db文档输出文件名:${doc.db.markdown.file}
+    api:
+    api控制文件路径:${doc.api.controller}
+    api输入目录(routes):${doc.api.routes}
+    api文档输出路径:${doc.api.markdown.path}
+    api文档输出文件名:${doc.api.markdown.file}`);
       return;
     } else {
       console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
@@ -53,9 +60,14 @@ exports.runAction = function*() {
     const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
       const doc = require(process.cwd() + '/doc.json');
+
+      doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
+      doc.db.schemas = func.checkPath(doc.db.schemas);
       yield craeteDb.createDOC(doc.db.schemas, doc.db.markdown);
-      yield createRouter.createDOC(doc);
-      console.log('markdown文档创建成功,请查看' + doc.markdown.path + doc.markdown.file);
+
+      doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
+      doc.api.routes = func.checkPath(doc.api.routes);
+      yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
     } else {
       console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
       return;
@@ -92,23 +104,48 @@ exports.modifyhookAction = function*() {
 //遍历目录文件,包括子目录
 exports.getAllFiles = getFiles;
 function* getFiles(dir) {
-  try{
+  try {
     var filesArr = [];
     var files = yield fs.readdirAsync(dir);
-    for(var file of files){
+    for (var file of files) {
       var pathName = dir + file;
       var info = yield fs.statAsync(pathName);
-      if(info.isDirectory()){
+      if (info.isDirectory()) {
         filesArr = filesArr.concat(yield getFiles(pathName + '/'));
       }
-      if(path.extname(file) === '.js' ){
+      if (path.extname(file) === '.js') {
         filesArr.push(dir + file);
       }
     }
     return filesArr;
-  }catch (err){
+  } catch (err) {
     console.log(err);
   }
 }
+
+exports.getRoutes = function*(file) {
+  const request = ['GET', 'POST', 'PUT', 'DELETE', 'INPUT', 'TRACE', 'OPTIONS', 'HEAD'
+    , 'get', 'post', 'put', 'delete', 'input', 'trace', 'options', 'head'];
+  var content = yield fs.readFileAsync(file);
+  var dirtyRoutes = content.toString().match(/\[.*\]/g);
+  var routes = [];
+  var data = {};
+  for (var dirtrRoute of dirtyRoutes) {
+    var result = dirtrRoute.replace(/[\[\]\s\']/g, '').split(',');
+    if (request.indexOf(result[0]) > -1) {
+      routes.push(result)
+    }
+  }
+  for (var route of routes) {
+    var key = route[3];
+    var value = {};
+    value.path = route[1];
+    value.method = route[0];
+    value.group = route[2].split('.')[1] || route[2];
+    data[key] = value;
+  }
+  return data;
+};
+
 
 

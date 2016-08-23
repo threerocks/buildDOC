@@ -7,8 +7,8 @@
     }
   },
   "api": {
-    "routers": "",
-    "":
+    "controller": "/Users/mac/Desktop/createDOC/router.js",
+    "routes": "/Users/mac/Desktop/testssss/models",
     "markdown": {
       "path": "/Users/mac/Desktop/",
       "file": "api.md"

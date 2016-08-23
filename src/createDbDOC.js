@@ -21,20 +21,12 @@ exports.createDOC = function* (path, markdown) {
   }
 };
 
-function removeSymbol(code) {
-  //console.log(typeof(code))
-  if(typeof(code) == 'string'){
-    const result = code.replace(/[\s\,\']/g, '');
-    return result;
-  }
-}
-
 function build(file, markdown) {
   const lines = [];
   const read = readline(file);
   read
     .on('line', function (line, lineCount, byteCount) {
-      lines.push(removeSymbol(line));
+      lines.push(func.removeSymbol(line));
     })
     .on('error', function (e) {
       throw e;
@@ -85,7 +77,7 @@ function createObject(lines, file, markdown) {
         if (childKey === 'type') {
           childValue = childValue.split('.')[1] || childValue
         }
-        value[childKey] = removeSymbol(childValue);
+        value[childKey] = func.removeSymbol(childValue);
         count++;
       }
       value.description = description;
@@ -98,9 +90,8 @@ function createObject(lines, file, markdown) {
       var childKey = child[0];
       var childValue = child[1];
       childValue = childValue.split('.')[1] || childValue;
-      console.log(childValue)
       var value = {};
-      value.type = removeSymbol(childValue);
+      value.type = func.removeSymbol(childValue);
       value.description = description;
       description = '';
       singleTableData[childKey] = value;
