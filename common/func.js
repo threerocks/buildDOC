@@ -77,6 +77,13 @@ exports.attributesExists = function (lines) {
   return lines;
 };
 
+//检查目录路径合法性(末尾时候含有'/'),并修改。
+exports.checkPath = function(path){
+  if(!(/\/$/.test(path))){
+    path += '/';
+  }
+  return path;
+};
 
 
 //type转换

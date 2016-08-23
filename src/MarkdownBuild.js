@@ -6,6 +6,12 @@ const func = require('../common/func');
 
 exports.dbbuild = function (tables, markdown) {
   var text = '# 数据库文档\n\n';
+  text += `<style type="text/css">
+    table {table-layout: fixed;}
+    th {background-color:rgb(0, 136, 204);color: white}
+    td {word-break: break-all; word-wrap:break-word;}
+</style>
+`
   const tableHeader =
     '|字段|类型|允许为空|是否主键|是否自增|说明|\n' +
     '|:---:|:---:|:---:|:---:|:---:|:---:|\n';

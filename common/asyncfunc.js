@@ -3,7 +3,8 @@ const Promise = require('bluebird'),
   path = require('path'),
   co = require('co');
 
-const craete = require('./../src/createDbDOC');
+const craeteDb = require('./../src/createDbDOC'),
+  createRouter = require('./../src/createRouterDOC');
 
 
 function* modifyHook(file) {
@@ -52,7 +53,8 @@ exports.runAction = function*() {
     const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
       const doc = require(process.cwd() + '/doc.json');
-      yield craete.createDOC(doc.schemas, doc.markdown);
+      yield craeteDb.createDOC(doc.db.schemas, doc.db.markdown);
+      yield createRouter.createDOC(doc);
       console.log('markdown文档创建成功,请查看' + doc.markdown.path + doc.markdown.file);
     } else {
       console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);

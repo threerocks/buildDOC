@@ -1,7 +1,17 @@
 {
-  "schemas":"/Users/mac/Desktop/testssss/schemas/",
-  "markdown": {
-    "path": "/Users/mac/Desktop/",
-    "file": "dbDocument.md"
+  "db": {
+    "schemas":"/Users/mac/Desktop/testssss/schemas/",
+    "markdown": {
+      "path": "/Users/mac/Desktop/",
+      "file": "db.md"
+    }
+  },
+  "api": {
+    "routers": "",
+    "":
+    "markdown": {
+      "path": "/Users/mac/Desktop/",
+      "file": "api.md"
+    }
   }
 }
