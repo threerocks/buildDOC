@@ -5,3 +5,5 @@ var co = require('co');
 var asyncFunc = require('./../common/asyncfunc');
 
 co(asyncFunc.runAction);
+//co(asyncFunc.runAction);
+//co(asyncFunc.showAction);

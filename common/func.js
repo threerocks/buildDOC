@@ -4,7 +4,6 @@
 
 //数组快速排序
 exports.quickSort = sort;
-
 function sort(array, start, end) {
   if (!array || start >= end) {
     return;
@@ -33,7 +32,7 @@ function sort(array, start, end) {
 
 //用于MarkdownBuild,将undefined 转换成false
 exports.spaceToFalse = function (str) {
-  if(str === undefined){
+  if (str === undefined) {
     return '';
   } else {
     return str;
@@ -43,11 +42,11 @@ exports.spaceToFalse = function (str) {
 //删除掉第一个'{'出现之前的内容,避免有其他信息混入,用于db文档。
 exports.clearHeader = function (lines) {
   for (var i in lines) {
-    if(/\/\/.*/.test(lines[i])){
+    if (/\/\/.*/.test(lines[i])) {
       lines.splice(i, i);
       continue;
     }
-    if(/\/\*[\s\S]*?/.test(lines[i])){
+    if (/\/\*[\s\S]*?/.test(lines[i])) {
       var start = i;
       var end = i;
       while (!/[\s\S]*?\*\//.test(lines[end])) {
@@ -69,22 +68,21 @@ exports.clearHeader = function (lines) {
 //查看是否含有'attributes: {',如果有则删掉之前的元素,用于db文档
 exports.attributesExists = function (lines) {
   for (var i in lines) {
-    if (/attributes\:\s?\{/.test(lines[i])){
+    if (/attributes\:\s?\{/.test(lines[i])) {
       lines.splice(0, i + 1);
-      break;
     }
   }
   return lines;
 };
 //查看第一个注释出现的地方,用于api文档
 exports.clearUnsignContent = function (lines) {
-  for(var index in lines){
-    if(/[@api | @name | @group | @param  | @paramExample | @success | @successExample,
-  | @error | @errorExample | @description]/.test(lines[index])){
+  for (var index in lines) {
+    if (/^\s?.*\@.*/.test(lines[index])) {
       lines.splice(0, index);
       break;
-    }else if(index === lines.length - 1){
+    } else if (index === lines.length - 1) {
       lines.splice(0, lines.length);
+      break;
     }
   }
   return lines;
@@ -93,166 +91,174 @@ exports.clearUnsignContent = function (lines) {
 exports.getSignContent = function (line) {
   var sign = ['api', 'name', 'group', 'param', 'paramExample', 'success', 'successExample',
     'error', 'errorExample', 'description'];
-  if(/@api/.test(line)){
-    const api = line.split('@api')[1].split(' ');
+  if (/@api/.test(line)) {
+    var api = line.split('@api')[1];
+    if (/\{.*\}/.test(api)) {
+      var method = /\{(.*?)\}/.exec(api)[1];
+      api.replace(/\{.*\}/, '');
+    }
+    var apiArray = api.split(' ');
+    console.log(apiArray);
     return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
+      method: method,
+      path: apiArray[2],
+      title: apiArray[3]
     }
   }
-  if(/@name/.test(line)){
+  if (/@name/.test(line)) {
     const name = line.split('@name')[1].split(' ');
     return {
-      name:name[1]
+      name: name[1]
     }
   }
-  if(/@group/.test(line)){
+  if (/@group/.test(line)) {
     const group = line.split('@group')[1].split(' ');
     return {
-      group:api[1]
+      group: group[1]
     }
   }
-  if(/@param/.test(line)){
+  if (/@param/.test(line)) {
     const param = line.split('@param')[1];
-    if(/\{.*\}/.text(param)){
+    if (/\{.*\}/.test(param)) {
       var type = /\{(.*?)\}/.exec(param)[1];
+      param.replace(/\{.*\}/, '');
     }
-    if(/\[.*\]/.text(param)){
+    if (/\[.*\]/.test(param)) {
       var field = /\[(.*?)\]/.exec(param)[1];
       var defaultValue = '';
-      if(/=/.test(field)){
+      if (/\=/.test(field)) {
         field = field.split('=')[0];
         defaultValue = field.split('=')[1];
       }
+      param.replace(/\[.*\]/, '');
     }
-    if(/required/.test(param)){
+    if (/required/.test(param)) {
       var reqired = true;
-    }//TODO description处理
+      param.replace(/required/, '');
+    }
+    var description = param;
     return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
+      paramType: type,
+      field: field,
+      defaultValue: defaultValue,
+      required: required,
+      paramDescription: description,
     }
   }
-  if(/@paramExample/.test(line)){
-    const api = line.split('@api')[1].split(' ');
+  if (/@paramExample/.test(line)) {
+    return 'paramExample'
+  }//TODO example处理
+  if (/@success/.test(line)) {
+    if (/@success/.test(line)) {
+    var success = line.split('@success')[1];
+    if (/\{.*\}/.test(success)) {
+      var type = /\{(.*?)\}/.exec(success)[1];
+      success.replace(/\{.*\}/, '');
+    }
+    var successArray = success.split(' ');
+    console.log(successArray);
     return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
+      successType: type,
+      status: successArray[1],
+      text: successArray[3]
     }
   }
-  if(/@success/.test(line)){
-    const api = line.split('@api')[1].split(' ');
+  }
+  if (/@successExample/.test(line)) {
+    return 'successExample'
+  }
+  if (/@error/.test(line)) {
+    const error = line.split('@name')[1].split(' ');
     return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
+      errorDescription: error[1]
     }
   }
-  if(/@successExample/.test(line)){
-    const api = line.split('@api')[1].split(' ');
-    return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
-    }
+  if (/@errorExample/.test(line)) {
+    return 'errorExample'
   }
-  if(/@error/.test(line)){
-    const api = line.split('@api')[1].split(' ');
+  if (/@description/.test(line)) {
+    var description = line.split('@name')[1].split(' ');
     return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
-    }
-  }
-  if(/@errorExample/.test(line)){
-    const api = line.split('@api')[1].split(' ');
-    return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
-    }
-  }
-  if(/@description/.test(line)){
-    const api = line.split('@api')[1].split(' ');
-    return {
-      method:api[1],
-      path:api[2],
-      title:api[3]
+      description: description[1]
     }
   }
   return;
 };
 
 //检查目录路径合法性(末尾时候含有'/'),并修改。
-exports.checkPath = function(path){
-  if(!(/\/$/.test(path))){
+exports.checkPath = function (path) {
+  if (!(/\/$/.test(path))) {
     path += '/';
   }
   return path;
 };
+//去除杂乱字符，用于db文档
 exports.removeSymbol = function (code) {
-  if(typeof(code) == 'string'){
+  if (typeof (code) == 'string') {
     const result = code.replace(/[\s\,\']/g, '');
     return result;
   }
 }
+//去除杂乱字符，用于api文档
+exports.removeSymbolApi = function (code) {
+  if (typeof (code) == 'string') {
+    const result = code.replace(/[\,\']/g, '');
+    return result;
+  }
+}
 
+//处理各种example，用于api文档
+exports.buildExample = function (count, lines, example, signObj) {
+  var start = 0;
+  var end = 0;
+  if (/\@/.test(lines[count])) {
+    start = count;
+    lines[start] = lines[start].replace('@' + example, '');
+    count++;
+    while (!/\@/.test(lines[count]) && /\*/.test(lines[count])) {
+      count++;
+    }
+    end = count;
+    signObj[example] = '```' + lines.slice(start, end + 1) + '```';
+  }
+  return signObj;
+}
 //type转换
 exports.typeTransform = function (type) {
   switch (type) {
     case 'ENUM':
       return 'enum';
-      break;
     case 'BOOLEAN':
       return 'boolean';
-      break;
     case 'INTEGER':
       return 'int32';
-      break;
     case 'BIGINT':
       return 'int64';
-      break;
     case 'FLOAT' || 'REAL':
       return 'float';
-      break;
     case 'DOUBLE':
       return 'double';
-      break;
     case 'DECIMAL':
       return 'number';
-      break;
     case 'DATE':
       return 'date-time';
-      break;
     case 'DATEONLY':
       return 'date';
-      break;
     case 'TIME':
       return 'time';
-      break;
     case 'UUID' || 'UUIDV1' || 'UUIDV4':
       return 'uuid';
-      break;
     case 'CHAR':
       return 'char';
-      break;
     case 'STRING':
       return 'string';
-      break;
     case 'TEXT':
       return 'text';
-      break;
     case 'JSON' || 'JSONB':
       return 'json';
-      break;
     case 'ARRAY':
       return 'array';
-      break;
     default:
       return type;
-      break;
   }
 };

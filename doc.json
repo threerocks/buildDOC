@@ -1,13 +1,13 @@
 {
   "db": {
-    "schemas":"/Users/mac/Desktop/testssss/schemas/",
+    "schemas":"/Users/mac/Desktop/testssss/schemas1/",
     "markdown": {
       "path": "/Users/mac/Desktop/",
-      "file": "db.md"
+      "file": "db1.md"
     }
   },
   "api": {
-    "controller": "/Users/mac/Desktop/createDOC/router.js",
+    "controller": "/Users/mac/Desktop/testssss/router.js",
     "routes": "/Users/mac/Desktop/testssss/models",
     "markdown": {
       "path": "/Users/mac/Desktop/",

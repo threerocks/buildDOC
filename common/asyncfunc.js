@@ -40,11 +40,11 @@ exports.showAction = function*() {
     db输入目录(schemas):${doc.db.schemas}
     db文档输出路径:${doc.db.markdown.path}
     db文档输出文件名:${doc.db.markdown.file}
-    api:
-    api控制文件路径:${doc.api.controller}
-    api输入目录(routes):${doc.api.routes}
-    api文档输出路径:${doc.api.markdown.path}
-    api文档输出文件名:${doc.api.markdown.file}`);
+    // api:
+    // api控制文件路径:${doc.api.controller}
+    // api输入目录(routes):${doc.api.routes}
+    // api文档输出路径:${doc.api.markdown.path}
+    // api文档输出文件名:${doc.api.markdown.file}`);
       return;
     } else {
       console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
@@ -60,14 +60,14 @@ exports.runAction = function*() {
     const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
       const doc = require(process.cwd() + '/doc.json');
-
+      // 处理db文档
       doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
       doc.db.schemas = func.checkPath(doc.db.schemas);
       yield craeteDb.createDOC(doc.db.schemas, doc.db.markdown);
-
-      doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
-      doc.api.routes = func.checkPath(doc.api.routes);
-      yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
+      // 处理api文档
+      // doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
+      // doc.api.routes = func.checkPath(doc.api.routes);
+      // yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
     } else {
       console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
       return;
