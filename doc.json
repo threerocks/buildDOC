@@ -1,16 +1,16 @@
 {
   "db": {
-    "schemas":"/Users/mac/Desktop/testssss/schemas1/",
+    "schemas":"/Users/mac/Desktop/testssss/schemas",
     "markdown": {
-      "path": "/Users/mac/Desktop/",
-      "file": "db1.md"
+      "path": "/Users/mac/Desktop/testssss/doc",
+      "file": "db.md"
     }
   },
   "api": {
     "controller": "/Users/mac/Desktop/testssss/router.js",
     "routes": "/Users/mac/Desktop/testssss/models",
     "markdown": {
-      "path": "/Users/mac/Desktop/",
+      "path": "/Users/mac/Desktop/testssss/doc",
       "file": "api.md"
     }
   }

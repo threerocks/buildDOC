@@ -1,12 +1,67 @@
 const Promise = require('bluebird'),
   fs = Promise.promisifyAll(require('fs')),
   path = require('path'),
-  co = require('co');
+  co = require('co'),
+  handlebars = require('handlebars');
 
 const craeteDb = require('./../src/createDbDOC'),
   createRouter = require('./../src/createRouterDOC'),
-  func = require('./func');
+  func = require('./func'),
+  config = require('./config');
 
+//初始化新建doc.json,处理函数
+function* newDoc(inputInfos) {
+  if (!Array.isArray(inputInfos) || inputInfos.length <= 0) {
+    return;
+  }
+  for (var inputinfo of inputInfos) {
+    var data = {
+      schemas: "",
+      dbPath: "",
+      dbFile: "",
+      controller: "",
+      routes: "",
+      apiPath: "",
+      apiFile: "",
+    }
+    switch (inputinfo.title) {
+      case 'modifyConfirm' || 'initConfirm':
+        break;
+      case 'defaultConfirm':
+        if (inputinfo.value === 'n' || inputinfo.value === 'N') {
+          var template = handlebars.compile(config.docjson);
+          var result = template(data);
+          yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
+          break;
+        }
+        data.schemas = process.cwd();
+        data.dbPath = process.cwd();
+        data.dbFile = 'db.md';
+        data.controller = process.cwd();
+        data.routes = process.cwd();
+        data.apiPath = process.cwd();
+        data.apiFile = 'api.md';
+        var template = handlebars.compile(config.docjson);
+        var result = template(data);
+        yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
+        break;
+      case 'buildConfirm':
+        if (inputinfo.value === 'n' || inputinfo.value === 'N') {
+          break;
+        }
+        var content = yield fs.readFileAsync(process.cwd() + '/doc.json', 'utf-8');
+        console.log('');
+        console.log('======= doc.json ========');
+        console.log(content);
+        console.log('==== 请继续配置详细路径 ====');
+        console.log('');
+        break;
+      default:
+        break;
+    }
+  }
+}
+//初始化覆盖doc.json,处理函数
 
 function* modifyHook(file) {
   try {
@@ -15,7 +70,7 @@ function* modifyHook(file) {
     yield fs.writeFileAsync(inputFile, content);
     console.log('修改 ' + inputFile + ' 成功。');
   } catch (err) {
-    console.log(err);
+    console.warn(err);
   }
 }
 
@@ -27,35 +82,62 @@ function exists(file) {
     });
   });
 }
+exports.initAction = function* () {
+  try {
+    var docPath = yield exists(process.cwd() + '/doc.json');
+    if (docPath) {
+      func.initRepl(config.coverInit, arr => {
+        co(newDoc(arr));
+      })
+    } else {
+      yield fs.openAsync(process.cwd() + '/doc.json', 'w');
+      yield fs.writeFileAsync(process.cwd() + '/doc.json', yield fs.readFileAsync(path.resolve(__dirname, '..') + '/example/doc.json'));
+      console.log();
+    }
+  } catch (err) {
+    console.warn(err);
+  }
+};
 
-exports.showAction = function*() {
+exports.showAction = function* () {
   try {
     var docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
       const doc = require(process.cwd() + '/doc.json');
+      doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
+      doc.db.schemas = func.checkPath(doc.db.schemas);
+      doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
+      doc.api.routes = func.checkPath(doc.api.routes);
+      const dbMarkdownPath = yield exists(doc.db.markdown.path);
+      const dbSchemas = yield exists(doc.db.schemas);
+      const apiController = yield exists(doc.api.controller);
+      const apiMarkdownPath = yield exists(doc.api.markdown.path);
+      const apiRouters = yield exists(doc.api.routes);
       console.log(`
-    查找doc.json成功!
-    路径:${process.cwd()}/doc.json
-    db:
-    db输入目录(schemas):${doc.db.schemas}
-    db文档输出路径:${doc.db.markdown.path}
-    db文档输出文件名:${doc.db.markdown.file}
-    // api:
-    // api控制文件路径:${doc.api.controller}
-    // api输入目录(routes):${doc.api.routes}
-    // api文档输出路径:${doc.api.markdown.path}
-    // api文档输出文件名:${doc.api.markdown.file}`);
+======= √只表示路径存在，不代表路径配置正确 =======
+======= X只表示路径不存在 =======
+
+${docPath ? '√' : 'X'}   doc.json -> ${process.cwd()}/doc.json
+     
+  db:
+${dbSchemas ? '√' : 'X'}   输入 <- ${doc.db.schemas}
+${dbMarkdownPath ? '√' : 'X'}   输出 -> ${doc.db.markdown.path}${doc.db.markdown.file}
+      
+  api:
+${apiController ? '√' : 'X'}   控制 <- ${doc.api.controller}
+${apiMarkdownPath ? '√' : 'X'}   输入 <- ${doc.api.routes}
+${apiRouters ? '√' : 'X'}   输出 -> ${doc.api.markdown.path}${doc.api.markdown.file}`)
       return;
     } else {
-      console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
+      console.warn(config.nofile);
       return;
     }
   } catch (err) {
-    console.log(err);
+    console.warn(err);
   }
 };
 
-exports.runAction = function*() {
+exports.runAction = function* () {
   try {
     const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
@@ -65,11 +147,11 @@ exports.runAction = function*() {
       doc.db.schemas = func.checkPath(doc.db.schemas);
       yield craeteDb.createDOC(doc.db.schemas, doc.db.markdown);
       // 处理api文档
-      // doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
-      // doc.api.routes = func.checkPath(doc.api.routes);
-      // yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
+      doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
+      doc.api.routes = func.checkPath(doc.api.routes);
+      yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
     } else {
-      console.log(`找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`);
+      console.warn(config.nofile);
       return;
     }
   } catch (err) {
@@ -77,18 +159,13 @@ exports.runAction = function*() {
   }
 };
 
-exports.modifyhookAction = function*() {
+exports.modifyhookAction = function* () {
   try {
-    console.log('开始修改本地.git/hooks文件');
+    console.log(config.startModifyhook);
     const commitSamplePath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg.sample');
     const commitPath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg');
     if (!commitPath && !commitSamplePath) {
-      console.log(`
-      找不到prepare-commit-msg文件
-      可能原因如下:
-      1、未初始化git,.git目录不存在。
-      2、prepare-commit-msg文件被修改。
-      请检查项目文件!`)
+      console.log(config.nohook)
     } else if (commitSamplePath) {
       yield fs.renameAsync(process.cwd() + '/.git/hooks/prepare-commit-msg.sample',
         process.cwd() + '/.git/hooks/prepare-commit-msg');
@@ -97,7 +174,7 @@ exports.modifyhookAction = function*() {
       yield modifyHook(path.resolve(__dirname, '..') + '/example/prepare-commit-msg.js');
     }
   } catch (err) {
-    console.log(err);
+    console.warn(err);
   }
 };
 
@@ -119,11 +196,11 @@ function* getFiles(dir) {
     }
     return filesArr;
   } catch (err) {
-    console.log(err);
+    console.warn(err);
   }
 }
 
-exports.getRoutes = function*(file) {
+exports.getRoutes = function* (file) {
   const request = ['GET', 'POST', 'PUT', 'DELETE', 'INPUT', 'TRACE', 'OPTIONS', 'HEAD'
     , 'get', 'post', 'put', 'delete', 'input', 'trace', 'options', 'head'];
   var content = yield fs.readFileAsync(file);

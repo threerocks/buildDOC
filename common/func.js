@@ -38,6 +38,40 @@ exports.spaceToFalse = function (str) {
     return str;
   }
 };
+//初始化命令，人机交互控制
+exports.initRepl = function (init, func) {
+  var i = 1;
+  var inputArr = [];
+  var len = init.length;
+  process.stdout.write(init[0].description);
+  process.stdin.resume();
+  process.stdin.setEncoding('utf-8');
+  process.stdin.on('data', function (chunk) {
+    chunk = chunk.replace(/[\s\n]/, '');
+    if(chunk !== 'y' && chunk !== 'Y' && chunk !== 'n' && chunk !== 'N'){
+      console.log('您输入的命令是： ' + chunk)
+      console.warn('请输入正确指令：y/n');
+      process.exit();
+    }
+    if(
+        (init[i-1].title === 'modifyConfirm' || init[i-1].title === 'initConfirm') && 
+        (chunk === 'n' || chunk === 'N')
+      ){
+      process.exit();
+    }
+    var inputJson = {
+      title: init[i - 1].title,
+      value: chunk,
+    };
+    inputArr.push(inputJson);
+    if ((len--) > 1) {
+      process.stdout.write(init[i++].description)
+    } else {
+      process.stdin.pause();
+      func(inputArr);
+    }
+  });
+}
 
 //删除掉第一个'{'出现之前的内容,避免有其他信息混入,用于db文档。
 exports.clearHeader = function (lines) {

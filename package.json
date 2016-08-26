@@ -28,6 +28,7 @@
     "bluebird": "^3.4.1",
     "co": "^4.6.0",
     "commander": "^2.9.0",
+    "handlebars": "^4.0.5",
     "linebyline": "^1.3.0"
   },
   "devDependencies": {}
