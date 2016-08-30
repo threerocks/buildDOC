@@ -54,23 +54,21 @@
 doc.json示例
 ```json
 {
-  {
-  "db": {
-    "schemas":"/Users/mac/Desktop/testssss/schemas",
-    "markdown": {
-      "path": "/Users/mac/Desktop/testssss/doc1",
-      "file": "db.md"
+    "db": {
+        "schemas": "/Users/mac/Desktop/testssss/schemas",
+        "markdown": {
+            "path": "/Users/mac/Desktop/testssss/doc1/",
+            "file": "db.md"
+        }
+    },
+    "api": {
+        "controller": "/Users/mac/Desktop/testssss",
+        "routes": "/Users/mac/Desktop/testssss",
+        "markdown": {
+            "path": "/Users/mac/Desktop/testssss/doc1",
+            "file": "api.md"
+        }
     }
-  },
-  "api": {
-    "controller": "/Users/mac/Desktop/testssss/router.js",
-    "routes": "/Users/mac/Desktop/testssss/models",
-    "markdown": {
-      "path": "/Users/mac/Desktop/testssss/doc",
-      "file": "api.md"
-    }
-  }
-}
 }
 ```
 schema.js示例
