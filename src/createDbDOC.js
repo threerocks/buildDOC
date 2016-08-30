@@ -3,7 +3,8 @@ const path = require('path'),
 
 const markdownBuild = require('./MarkdownBuild'),
   asyncfunc = require('./../common/asyncfunc'),
-  func = require('./../common/func');
+  func = require('./../common/func'),
+  config = require('./../common/config');
 
 var fileNumber = 0; //需处理的文件总数
 var fileCount = 0; //处理文件计数
@@ -25,16 +26,16 @@ function build(file, markdown) {
   const lines = [];
   const read = readline(file);
   read
-    .on('line', function (line, lineCount, byteCount) {
+    .on('line', (line, lineCount, byteCount) => {
       lines.push(func.removeSymbol(line));
     })
-    .on('error', function (e) {
+    .on('error', (e) => {
       throw e;
     })
-    .on('end', function () {
+    .on('end', () => {
       console.log(fileCount + '、 正在处理' + path.basename(file, '.js') + '...');
       createObject(lines, file, markdown);
-      console.log('处理完毕')
+      console.log(config.colors.blue('处理完毕'));
     });
 }
 

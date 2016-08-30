@@ -29,11 +29,11 @@ program
 
 program
   .command('*')
-  .action(function(env){
+  .action((env) => {
     console.error('不存在命令 "%s"', env);
   });
 
-program.on('--help', function(){
+program.on('--help', () => {
   console.log('  Examples:');
   console.log('');
   console.log('    $ createDOC --help');

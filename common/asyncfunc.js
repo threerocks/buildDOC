@@ -2,10 +2,12 @@ const Promise = require('bluebird'),
   fs = Promise.promisifyAll(require('fs')),
   path = require('path'),
   co = require('co'),
-  handlebars = require('handlebars');
+  handlebars = require('handlebars'),
+  mkdirp = require('mkdirp'),
+  dox = require('dox');
 
-const craeteDb = require('./../src/createDbDOC'),
-  createRouter = require('./../src/createRouterDOC'),
+const craeteDbDoc = require('./../src/createDbDOC'),
+  createApiDoc = require('./../src/createApiDOC'),
   func = require('./func'),
   config = require('./config');
 
@@ -51,9 +53,9 @@ function* newDoc(inputInfos) {
         }
         var content = yield fs.readFileAsync(process.cwd() + '/doc.json', 'utf-8');
         console.log('');
-        console.log('======= doc.json ========');
+        console.log(config.colors.rainbow('======= doc.json ========'));
         console.log(content);
-        console.log('==== 请继续配置详细路径 ====');
+        console.log(config.colors.rainbow('==== 请继续配置详细路径 ===='));
         console.log('');
         break;
       default:
@@ -61,14 +63,51 @@ function* newDoc(inputInfos) {
     }
   }
 }
-//初始化覆盖doc.json,处理函数
+function* mkdirs(str, path) {
+  var pathname = config.colors.red(path);
+  if (Array.isArray(path)) {
+    if (path.length === 2) {
+      pathname = config.colors.red(path[0]) + ' 和 ' + config.colors.red(path[1]);
+    } else {
+      return;
+    }
+  }
+  process.stdout.write(config.colors.red(str) + '输出目录' + pathname + '不存在，是否创建 (y/n):');
+  process.stdin.resume();
+  process.stdin.setEncoding('utf-8');
+  process.stdin.on('data', (chunk) => {
+    co(function* () {
+      chunk = chunk.replace(/[\s\n]/, '');
+      if (chunk !== 'y' && chunk !== 'Y' && chunk !== 'n' && chunk !== 'N') {
+        console.log(config.colors.red('您输入的命令是： ' + chunk));
+        console.warn(config.colors.red('请输入正确指令：y/n'));
+        process.exit();
+      }
+      process.stdin.pause();
+      if (chunk === 'y' || chunk === 'Y') {
+        if (Array.isArray(path)) {
+          yield mkdir(path[0]);
+          console.log(config.colors.red(path[0]) + '创建成功');
+          yield mkdir(path[1]);
+          console.log(config.colors.red(path[1]) + '创建成功');
+          process.exit();
+        }
+        yield mkdir(path)
+        console.log(config.colors.red(path) + '创建成功');
+        process.exit();
+      } else if (chunk === 'n' || chunk === 'N') {
+        process.exit();
+      }
+    });
+  });
+}
 
 function* modifyHook(file) {
   try {
     const inputFile = process.cwd() + '/.git/hooks/prepare-commit-msg';
     const content = yield fs.readFileAsync(file);
     yield fs.writeFileAsync(inputFile, content);
-    console.log('修改 ' + inputFile + ' 成功。');
+    console.log('修改 ' + config.colors.red(inputFile) + ' 成功。');
   } catch (err) {
     console.warn(err);
   }
@@ -76,11 +115,19 @@ function* modifyHook(file) {
 
 function exists(file) {
   return new Promise((resolve, reject) => {
-    fs.exists(file, function (exists) {
+    fs.exists(file, (exists) => {
       if (!exists) resolve(exists);
       resolve(exists);
     });
   });
+}
+function mkdir(path) {
+  return new Promise((resolve, reject) => {
+    mkdirp(path, (err) => {
+      if (err) reject(err);
+      else resolve()
+    })
+  })
 }
 exports.initAction = function* () {
   try {
@@ -113,20 +160,28 @@ exports.showAction = function* () {
       const apiController = yield exists(doc.api.controller);
       const apiMarkdownPath = yield exists(doc.api.markdown.path);
       const apiRouters = yield exists(doc.api.routes);
-      console.log(`
-======= √只表示路径存在，不代表路径配置正确 =======
-======= X只表示路径不存在 =======
 
-${docPath ? '√' : 'X'}   doc.json -> ${process.cwd()}/doc.json
-     
-  db:
-${dbSchemas ? '√' : 'X'}   输入 <- ${doc.db.schemas}
-${dbMarkdownPath ? '√' : 'X'}   输出 -> ${doc.db.markdown.path}${doc.db.markdown.file}
-      
-  api:
-${apiController ? '√' : 'X'}   控制 <- ${doc.api.controller}
-${apiMarkdownPath ? '√' : 'X'}   输入 <- ${doc.api.routes}
-${apiRouters ? '√' : 'X'}   输出 -> ${doc.api.markdown.path}${doc.api.markdown.file}`)
+      console.log(config.colors.rainbow(config.showDescription));
+      console.log(config.colors.red(`
+${docPath ? '√' : 'X'}`) + `   doc.json -> ${process.cwd()}/doc.json
+`);
+      console.log('  db:');
+      console.log(config.colors.red(`${dbSchemas ? '√' : 'X'}`) + `   输入 <- ${doc.db.schemas}`);
+      console.log(config.colors.red(`${dbMarkdownPath ? '√' : 'X'}`) + `   输出 -> ${doc.db.markdown.path}${doc.db.markdown.file}`);
+      console.log('  api:');
+      console.log(config.colors.red(`${apiController ? '√' : 'X'}`) + `   控制 <- ${doc.api.controller}`)
+      console.log(config.colors.red(`${apiMarkdownPath ? '√' : 'X'}`) + `   输入 <- ${doc.api.routes}`)
+      console.log(config.colors.red(`${apiRouters ? '√' : 'X'}`) + `   输出 -> ${doc.api.markdown.path}${doc.api.markdown.file}`);
+      console.log('');
+      if (!dbMarkdownPath && apiMarkdownPath) {
+        yield mkdirs('db ', doc.db.markdown.path);
+      }
+      if (!apiMarkdownPath && dbMarkdownPath) {
+        yield mkdirs('api ', doc.api.markdown.path);
+      }
+      if (!apiMarkdownPath && !dbMarkdownPath) {
+        yield mkdirs('db 和 api ', [doc.db.markdown.path, doc.api.markdown.path]);
+      }
       return;
     } else {
       console.warn(config.nofile);
@@ -145,11 +200,11 @@ exports.runAction = function* () {
       // 处理db文档
       doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
       doc.db.schemas = func.checkPath(doc.db.schemas);
-      yield craeteDb.createDOC(doc.db.schemas, doc.db.markdown);
+      //yield craeteDbDoc.createDOC(doc.db.schemas, doc.db.markdown);
       // 处理api文档
       doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
       doc.api.routes = func.checkPath(doc.api.routes);
-      yield createRouter.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
+      yield createApiDoc.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
     } else {
       console.warn(config.nofile);
       return;
@@ -165,7 +220,7 @@ exports.modifyhookAction = function* () {
     const commitSamplePath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg.sample');
     const commitPath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg');
     if (!commitPath && !commitSamplePath) {
-      console.log(config.nohook)
+      console.log(config.colors.red(nfig.nohook));
     } else if (commitSamplePath) {
       yield fs.renameAsync(process.cwd() + '/.git/hooks/prepare-commit-msg.sample',
         process.cwd() + '/.git/hooks/prepare-commit-msg');
@@ -224,5 +279,61 @@ exports.getRoutes = function* (file) {
   return data;
 };
 
+exports.buildDoxObjs = function* (routes, files) {
+  var doxObjs = [];
+  var count = 0;
+  for (var file of files) {
+    var code = yield fs.readFileAsync(file, 'utf-8');
+    doxObjs = doxObjs.concat(dox.parseComments(code));
+    count++;
+    if (count === files.length) {
+      return filterObj(routes, doxObjs);
+    }
+  }
+}
+
+function filterObj(routes, doxObjs) {
+  var pureObjArr = {};
+  doxObjs.map((obj) => {
+    var key = '';
+    var value = {};
+    if (obj.ctx) {
+      var params = [];
+      key = obj.ctx.name.replace(/[\*]/, '');
+      value.type = obj.ctx.type;
+      value.description = obj.description.full;
+      if (obj.tags && Array.isArray(obj.tags)) {
+        for (var tag of obj.tags) {
+          if (tag.type === 'param') {
+            var param = {};
+            if (/\=/.test(tag.name)) {
+              var name = tag.name.split('=');
+              tag.name = name[0];
+              tag.defaultValue = name[1];
+            }
+            param.name = tag.name || '';
+            param.defaultValue = tag.defaultValue || '';
+            param.description = tag.description || '';
+            param.type = (tag.types && Array.isArray(tag.types)) ? tag.types.join(' ') : '';
+            params.push(param)
+            value.param = params;
+          } else if (tag.type === 'example') {
+            value.example = tag.html || '';
+          } else if (tag.type === 'return') {
+            var returnValue = {};
+            returnValue.description = tag.description || '';
+            returnValue.type = (tag.types && Array.isArray(tag.types)) ? tag.types.join(' ') : '';
+            value.returnValue = returnValue;
+          } else {
+            var other = tag.type;
+            value[other] = tag.string || '';
+          }
+        }
+      }
+      pureObjArr[key] = Object.assign(value, routes[key]);
+    }
+  });
+  return pureObjArr;
+}
 
 

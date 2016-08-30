@@ -41,7 +41,7 @@ exports.dbbuild = function (tables, markdown) {
   }
 
   //写入文件
-  fs.writeFile(markdown.path + markdown.file , text, (err) => {
+  fs.writeFile(markdown.path + markdown.file, text, (err) => {
     if (err) throw err;
     console.log('It\'s saved!'); //文件被保存
     return true;
@@ -49,6 +49,55 @@ exports.dbbuild = function (tables, markdown) {
 };
 
 
-exports.routerbuild = function (tables, markdown) {
+exports.apibuild = function (apis, markdown) {
+  console.log(apis);
+  var text = '# API文档\n\n';
+  text += `<style type="text/css">
+    table {table-layout: fixed;}
+    th {background-color:rgb(0, 136, 204);color: white}
+    td {word-break: break-all; word-wrap:break-word;}
+</style>
+`
+  const paramTableHeader =
+    '|参数名字|默认值|参数类型|说明|\n' +
+    '|:---:|:---:|:---:|:---:|\n';
+  const returnTableHeader =
+    '|类型|说明|\n' +
+    '|:---:|:---:|\n';
 
+  for (var api in apis) {
+    var properties = func.propertyAssign(apis[api]);
+    var description = properties.description + '\n';
+    var path = '```' + properties.path + '```' + '\n';
+    var method = properties.method + '\n';
+    var example = properties.example + '\n';
+    var other = properties.other + '\n';
+    var paramTable = paramTableHeader +
+      ((properties.paramTable === '') ? '| | | | |' : properties.paramTable) +
+      '\n';
+    var returnTable = returnTableHeader +
+      ((properties.returnTable === '') ? '| | |' : properties.returnTable) +
+      '\n';
+    text += `## ${api}
+#### 简要描述：
+ - ${description}
+#### 请求URL：
+ - ${path}
+#### 请求方式：
+ - ${method}
+#### 参数：
+${paramTable}
+#### 返回参数说明：
+${returnTable}
+#### 返回实例：
+${example}
+#### 其他说明：
+ - ${other}`;
+  }
+  //写入文件
+  fs.writeFile(markdown.path + markdown.file, text, (err) => {
+    if (err) throw err;
+    console.log('It\'s saved!'); //文件被保存
+    return true;
+  });
 };

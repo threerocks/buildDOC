@@ -2,56 +2,79 @@
 
 ## 简介
 
-工具可以通过schema文件生成数据库文档，通过路由文件、接口代码、注释等生成接口文档，每次commit自动更新文档，让人专注于代码编写。目前程序初次实现，还有很多功能需要完善，许多地方需要优化。
+工具可以自动化生成数据库文档，API接口文档，并通过修改git hooks，使项目的每次commit都会自动更新文档。
 
 ## 安装
 
  `npm i createDOC -g`
 
+## 配置
+ - 在项目根目录使用`createDOC init`命令初始化，该命令会在当前目录创建`doc.json`文件。
+ - 生成`doc.json`文件后，需要详细配置数据库schemas存储路径(目前只支持关系型数据库)，以及路由控制文件，以及子路由目录。
+ - API注释规则，遵循TJ大神dox规范，简化版规则如下
+ ```js
+ /**
+ * API description
+ *
+ * @param {type} name/name=default_value description 
+ * @return {String} description
+ * @example
+ *     any example
+ *     
+ * @other description
+ */
+ ```
+*ps: 此工具为内部使用工具，如个人使用可下载源码，做简单修改即可*
 ## 使用
 
 ```sh
-Usage: createDOC [options] [command]
-    Commands:
- 
-    show         显示当前状态
+  Usage: createDOC [options] [command]
+
+  Commands:
+
+    init         初始化当前目录doc.json文件
+    show         显示配置文件状态
     run          启动程序
-    modifyhook   修改项目下的hooks文件
- 
+    modifyhook   修改项目下的hook文件
+    *
+
   Options:
- 
+
     -h, --help     output usage information
     -V, --version  output the version number
+
+  Examples:
+
+    $ createDOC --help
+    $ createDOC -h
+    $ createDOC show
 ```
 
-**使用方法:**  
-
-1. 在开发项目根目录使用该命令工具,在项目根目录新建`doc.json`文件,指定`schema`存储目录,和`markdown`文件输出路径,文件样例如下。
-2. 使用`createDOC -h`或者`createDOC -V(大写)`来确定`createDOC`是否安装成功。
-3. 单独运行程序使用`createDOC run`命令。
-4. 使用`createDOC modifyhook`命令修改本地钩子文件,之后无需任何操作,项目每次`commit`文档会自动更新。
-5. 使用`createDOC show`命令随时查看输入输出路径,确保输入输出路径正确。
+## 示例说明
+doc.json示例
 ```json
 {
-  "schemas":"/Users/mac/Desktop/testssss/models/",
-  //schema文件目录,目前所有schema文件都需要存在此目录的根目录,暂时 TODO:不支持子目录
-  "markdown": {
-    "path": "/Users/mac/Desktop/",
-    "file": "dbDocument.md"
+  {
+  "db": {
+    "schemas":"/Users/mac/Desktop/testssss/schemas",
+    "markdown": {
+      "path": "/Users/mac/Desktop/testssss/doc1",
+      "file": "db.md"
+    }
+  },
+  "api": {
+    "controller": "/Users/mac/Desktop/testssss/router.js",
+    "routes": "/Users/mac/Desktop/testssss/models",
+    "markdown": {
+      "path": "/Users/mac/Desktop/testssss/doc",
+      "file": "api.md"
+    }
   }
-  //markdown文档输出目录和文件名
+}
 }
 ```
-## 注意
-1. 尽量全局安装。
-2. schema文件格式,
-    1. 如果文件存在`tableName`属性,表名称为`tableName`的值,否则表名称设置为当前文件名。
-    2. 字段属性和值的关系必须严格遵守`key:{}`的格式,`:{`或`: {`是必须存在的标示,用于切割内容。
-    3. 单行注释使用`//这是注释`。
-    4. 多行注释使用`/* 这是注释*/`,切勿出现多行`//`的情况。
-    5. 示例如下(注:只需要上述4条件满足,其他诸如示例前两行的`sequelize`官方格式为非必须,同时字段属性写法也无限制)。
-3. 包版本更新后需要重新使用`createDOC modifyhook`命令设置本地钩子。
-```javascript
+schema.js示例
+```js
 module.exports = function(sequelize, DataTypes) {
    	return sequelize.define('test_zk_absence', {
    		//这是id
@@ -87,9 +110,26 @@ module.exports = function(sequelize, DataTypes) {
    	});
    };
 ```
+api注释示例
+```js
+/**
+   * 获取多个课程
+   * @param {Number} examinationId 考试类型
+   * @param {Number} subjectId 科目类型
+   * @param {Number} statusId=3 状态类型
+   * @param {String} startDate 更新开始时间
+   * @param {String} endDate 更新结束时间
+   * @param {String} keyword 关键词
+   * @param {Number} page 页码
+   * @return {Array} ok
+   * @example [1,2,3,3,4]
+   */
+getCourses(req, params) {
+		... ...
+}
+```
 ## TODO
 1. 代码逻辑优化，适应力更强。
 2. 代码速度、质量优化。
-3. 增加路由、代码、注释文档生成功能。
 
 [github地址](https://github.com/a1511870876/buildDOC)
