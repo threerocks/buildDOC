@@ -2,7 +2,7 @@
 
 ## 简介
 
-工具可以自动化生成数据库文档，API接口文档，并通过修改git hooks，使项目的每次commit都会自动更新文档。
+工具可以自动化生成数据库和API接口的markdown文档，并通过修改git hooks，使项目的每次commit都会自动更新文档。
 
 ## 安装
 
@@ -129,5 +129,6 @@ getCourses(req, params) {
 ## TODO
 1. 代码逻辑优化，适应力更强。
 2. 代码速度、质量优化。
+3. 加入单元测试
 
 [github地址](https://github.com/a1511870876/buildDOC)
