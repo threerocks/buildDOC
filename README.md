@@ -133,4 +133,4 @@ getCourses(req, params) {
 2. 代码速度、质量优化。
 3. 加入单元测试
 
-[github地址](https://github.com/a1511870876/buildDOC)
+[github地址](https://github.com/threerocks/buildDOC)

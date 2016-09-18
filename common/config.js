@@ -17,7 +17,7 @@ module.exports = {
             defaults: 'y'
         },
         {
-            title:'buildConfirm',
+            title:'showConfig',
             description:'是否显示doc.json当前配置？(y/n)  ',
             defaults: 'y'
         }
@@ -34,7 +34,7 @@ module.exports = {
             defaults: 'y'
         },
         {
-            title:'buildConfirm',
+            title:'showConfig',
             description:'是否显示doc.json当前配置？(y/n)  ',
             defaults: 'y'
         }

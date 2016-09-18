@@ -36,18 +36,18 @@ function* newDoc(inputInfos) {
           yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
           break;
         }
-        data.schemas = process.cwd();
-        data.dbPath = process.cwd();
+        data.schemas = './schemas/';
+        data.dbPath = './doc/';
         data.dbFile = 'db.md';
-        data.controller = process.cwd();
-        data.routes = process.cwd();
-        data.apiPath = process.cwd();
+        data.controller = './controller.js';
+        data.routes = './routes';
+        data.apiPath = './doc';
         data.apiFile = 'api.md';
         var template = handlebars.compile(config.docjson);
         var result = template(data);
         yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
         break;
-      case 'buildConfirm':
+      case 'showConfig':
         if (inputinfo.value === 'n' || inputinfo.value === 'N') {
           break;
         }
@@ -137,9 +137,9 @@ exports.initAction = function* () {
         co(newDoc(arr));
       })
     } else {
-      yield fs.openAsync(process.cwd() + '/doc.json', 'w');
-      yield fs.writeFileAsync(process.cwd() + '/doc.json', yield fs.readFileAsync(path.resolve(__dirname, '..') + '/example/doc.json'));
-      console.log();
+      func.initRepl(config.newInit, arr => {
+        co(newDoc(arr));
+      })
     }
   } catch (err) {
     console.warn(err);

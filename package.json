@@ -17,11 +17,11 @@
   ],
   "author": {
     "name": "smart sweet",
-    "url": "https://github.com/a1511870876"
+    "url": "https://github.com/threerocks"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/a1511870876/buildDOC"
+    "url": "https://github.com/threerocks/buildDOC"
   },
   "license": "ISC",
   "dependencies": {
