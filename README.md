@@ -54,6 +54,7 @@
 
 ## 示例说明
 doc.json示例
+
 ```json
 {
     "db": {
@@ -74,6 +75,7 @@ doc.json示例
 }
 ```
 schema.js示例
+
 ```js
 module.exports = function(sequelize, DataTypes) {
    	return sequelize.define('test_zk_absence', {
@@ -111,6 +113,7 @@ module.exports = function(sequelize, DataTypes) {
    };
 ```
 api注释示例
+
 ```js
 /**
    * 获取多个课程
