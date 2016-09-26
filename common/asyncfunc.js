@@ -325,8 +325,10 @@ exports.buildDoxObjs = function* (routes, files) {
   let doxObjs = [];
   let count = 0;
   for (const file of files) {
+    console.log(`${count}、  正在处理${file}...`);
     const code = yield fs.readFileAsync(file, 'utf-8');
     doxObjs = doxObjs.concat(dox.parseComments(code));
+    console.log(config.colors.blue('处理完毕'));
     count++;
     if (count === files.length) {
       return filterObj(routes, doxObjs);
