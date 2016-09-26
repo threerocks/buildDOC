@@ -1,8 +1,7 @@
-const program = require('commander'),
-  co = require('co');
+'use strict';
 
-const appInfo = require('./../package.json'),
-  asyncFunc = require('./../common/asyncfunc.js');
+const program   = require('commander');
+const appInfo   = require('./../package.json');
 
 program.allowUnknownOption();
 program.version(appInfo.version);

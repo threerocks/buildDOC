@@ -1,7 +1,6 @@
 /**
  * Created by mac on 16/8/26.
  */
-const colors = require('colors/safe');
  
 module.exports = {
     newInit:
@@ -63,7 +62,7 @@ module.exports = {
 ======= √只表示路径存在，不代表路径配置正确 =======
 ======= X只表示路径不存在 =======`,
     nofile:
-    `找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。`,
+    '找不到doc.json文件,请检查doc.json文件是否存在于项目根目录。',
     startModifyhook:
     '开始修改本地.git/hooks文件',
     nohook:`找不到prepare-commit-msg文件
@@ -71,5 +70,5 @@ module.exports = {
     1、未初始化git,.git目录不存在。
     2、prepare-commit-msg文件被修改。
     请检查项目文件!`,
-    colors:colors,
-}
+    colors,
+};

@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * API description
  *
@@ -9,17 +11,12 @@
  * @other description
  */
 
-const markdownBuild = require('./MarkdownBuild'),
-  asyncfunc = require('./../common/asyncfunc');
-
 exports.createDOC = function* (controller, path, markdown) {
   try {
-    const routes = yield asyncfunc.getRoutes(controller);
-    const files = yield asyncfunc.getAllFiles(path);
-
-    const doxObjs = yield asyncfunc.buildDoxObjs(routes, files);
-    const mergerObjs = Object.assign(routes, doxObjs);
-
+    const routes     = yield asyncFunc.getRoutes(controller), 
+          files      = yield asyncFunc.getAllFiles(path), 
+          doxObjs    = yield asyncFunc.buildDoxObjs(routes, files), 
+          mergerObjs = Object.assign(routes, doxObjs);
     markdownBuild.apibuild(mergerObjs, markdown);
   } catch (err) {
     console.log(err);

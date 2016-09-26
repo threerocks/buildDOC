@@ -1,3 +1,15 @@
 {
-  "extends": "threerocks"
+  "extends": "threerocks",
+  "globals": {
+    "Promise":true,
+    "mkdirp":true,
+    "dox":true,
+    "colors":true,
+    "path":true,
+    "markdownBuild":true,
+    "func":true,
+    "config":true,
+    "co":true,
+    "asyncFunc":true
+  }
 }

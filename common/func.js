@@ -1,54 +1,44 @@
+'use strict';
+
 /**
  * Created by mac on 16/8/10.{
  */
-const config = require('./config');
+
 //数组快速排序
-exports.quickSort = sort;
-function sort(array, start, end) {
-  if (!array || start >= end) {
-    return;
-  }
-  var i = start;
-  var j = end;
-  var tmp = array[i];
+const sort = function (array, start, end) {
+  if (!array || start >= end) return;
+  let i = start,
+      j = end;
+  const tmp = array[i];
   while (i < j) {
-    while (i < j && array[j] >= tmp) {
-      j--;
-    }
-    if (i < j) {
-      array[i++] = array[j];
-    }
-    while (i < j && array[i] <= tmp) {
-      i++;
-    }
-    if (i < j) {
-      array[j--] = array[i];
-    }
+    while (i < j && array[j] >= tmp) j--;
+    if (i < j) array[i++] = array[j];
+    while (i < j && array[i] <= tmp) i++;
+    if (i < j) array[j--] = array[i];
   }
   array[i] = tmp;
   sort(array, start, i - 1);
   sort(array, i + 1, end);
-}
-
-//用于MarkdownBuild,将undefined 转换成false
-exports.spaceToFalse = function (str) {
-  if (str === undefined) {
-    return '';
-  } else {
-    return str;
-  }
 };
-//用于MarkdownBuild，根据对象属性进行赋值
+exports.quickSort = sort;
+
+//用于markdownBuild,将undefined 转换成false
+exports.spaceToFalse = function (str) {
+  if (str === undefined) return '';
+  else return str;
+};
+
+//用于markdownBuild，根据对象属性进行赋值
 exports.propertyAssign = function (api) {
-  var properties = Object.keys(api)
-  var description = '';
-  var path = '';
-  var method = '';
-  var example = '';
-  var other = '';
-  var paramTable = '';
-  var returnTable = '';
-  for (var property of properties) {
+  const properties = Object.keys(api);
+  let description = '',
+      path        = '',
+      method      = '',
+      example     = '',
+      other       = '',
+      paramTable  = '',
+      returnTable = '';
+  for (const property of properties) {
     switch (property) {
       case 'description':
         description = api[property];
@@ -67,15 +57,15 @@ exports.propertyAssign = function (api) {
         break;
       case 'param':
         if (Array.isArray(api[property])) {
-          for (var param of api[property]) {
+          for (const param of api[property]) {
             paramTable = paramTable +
               '|' + param.name +
               '|' + param.defaultValue +
               '|' + param.type +
               '|' + param.description;
-            paramTable += '|\n'
+            paramTable += '|\n';
           }
-        };
+        }
         break;
       case 'returnValue':
         returnTable = returnTable +
@@ -87,21 +77,21 @@ exports.propertyAssign = function (api) {
     }
   }
   return {
-    description: description,
-    path: path,
-    method: method,
-    example: example,
-    other: other,
-    paramTable: paramTable,
-    returnTable: returnTable
-  }
-}
+    description,
+    path,
+    method,
+    example,
+    other,
+    paramTable,
+    returnTable
+  };
+};
 
 //初始化命令，人机交互控制
 exports.initRepl = function (init, func) {
-  var i = 1;
-  var inputArr = [];
-  var len = init.length;
+  let i = 1;
+  const inputArr = [];
+  let len = init.length;
   process.stdout.write(init[0].description);
   process.stdin.resume();
   process.stdin.setEncoding('utf-8');
@@ -115,33 +105,30 @@ exports.initRepl = function (init, func) {
     if (
       (init[i - 1].title === 'modifyConfirm' || init[i - 1].title === 'initConfirm') &&
       (chunk === 'n' || chunk === 'N')
-    ) {
-      process.exit();
-    }
-    var inputJson = {
+    ) process.exit();
+    const inputJson = {
       title: init[i - 1].title,
       value: chunk,
     };
     inputArr.push(inputJson);
-    if ((len--) > 1) {
-      process.stdout.write(init[i++].description)
-    } else {
+    if ((len--) > 1) process.stdout.write(init[i++].description);
+    else {
       process.stdin.pause();
       func(inputArr);
     }
   });
-}
+};
 
 //删除掉第一个'{'出现之前的内容,避免有其他信息混入,用于db文档。
 exports.clearHeader = function (lines) {
-  for (var i in lines) {
+  for (const i in lines) {
     if (/\/\/.*/.test(lines[i])) {
       lines.splice(i, i);
       continue;
     }
     if (/\/\*[\s\S]*?/.test(lines[i])) {
-      var start = i;
-      var end = i;
+      const start = i;
+      let end = i;
       while (!/[\s\S]*?\*\//.test(lines[end])) {
         end++;
       }
@@ -149,39 +136,35 @@ exports.clearHeader = function (lines) {
       continue;
     }
     if (/\{/.test(lines[i])) {
-      if (/\/\//.test(lines[i])) {
-        continue;
-      }
+      if (/\/\//.test(lines[i])) continue;
       lines.splice(0, i);
       break;
     }
   }
   return lines;
 };
+
 //查看是否含有'attributes: {',如果有则删掉之前的元素,用于db文档
 exports.attributesExists = function (lines) {
-  for (var i in lines) {
-    if (/attributes\:\s?\{/.test(lines[i])) {
-      lines.splice(0, i + 1);
-    }
+  for (const i in lines) {
+    /attributes\:\s?\{/.test(lines[i]) && lines.splice(0, i + 1);
   }
   return lines;
 };
 
 //检查目录路径合法性(末尾时候含有'/'),并修改。
 exports.checkPath = function (path) {
-  if (!(/\/$/.test(path))) {
-    path += '/';
-  }
+  (!(/\/$/.test(path))) && (path += '/');
   return path;
 };
+
 //去除杂乱字符，用于db文档
 exports.removeSymbol = function (code) {
-  if (typeof (code) == 'string') {
+  if (typeof (code) === 'string') {
     const result = code.replace(/[\s\,\']/g, '');
     return result;
   }
-}
+};
 
 //type转换
 exports.typeTransform = function (type) {

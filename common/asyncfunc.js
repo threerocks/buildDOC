@@ -1,70 +1,71 @@
-const Promise = require('bluebird'),
-  fs = Promise.promisifyAll(require('fs')),
-  path = require('path'),
-  co = require('co'),
-  handlebars = require('handlebars'),
-  mkdirp = require('mkdirp'),
-  dox = require('dox');
+'use strict';
 
-const craeteDbDoc = require('./../src/createDbDOC'),
-  createApiDoc = require('./../src/createApiDOC'),
-  func = require('./func'),
-  config = require('./config');
+const handlebars   = require('handlebars');
+const createApiDoc = require('./../src/createApiDOC'),
+      craeteDbDoc  = require('./../src/createDbDOC');  
+
+const fs = Promise.promisifyAll(require('fs'));
 
 //初始化新建doc.json,处理函数
-function* newDoc(inputInfos) {
-  if (!Array.isArray(inputInfos) || inputInfos.length <= 0) {
-    return;
-  }
-  for (var inputinfo of inputInfos) {
-    var data = {
-      schemas: "",
-      dbPath: "",
-      dbFile: "",
-      controller: "",
-      routes: "",
-      apiPath: "",
-      apiFile: "",
-    }
+const newDoc = function* (inputInfos) {
+  if (!Array.isArray(inputInfos) || inputInfos.length <= 0) return;
+  for (const inputinfo of inputInfos) {
+    const data = {
+      schemas:    '',
+      dbPath:     '',
+      dbFile:     '',
+      controller: '',
+      routes:     '',
+      apiPath:    '',
+      apiFile:    '',
+    };
     switch (inputinfo.title) {
       case 'modifyConfirm' || 'initConfirm':
         break;
-      case 'defaultConfirm':
+      case 'defaultConfirm': {
+        const template = handlebars.compile(config.docjson);
+        const result   = template(data);
         if (inputinfo.value === 'n' || inputinfo.value === 'N') {
-          var template = handlebars.compile(config.docjson);
-          var result = template(data);
           yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
           break;
         }
-        data.schemas = './schemas/';
-        data.dbPath = './doc/';
-        data.dbFile = 'db.md';
+        data.schemas    = './schemas/';
+        data.dbPath     = './doc/';
+        data.dbFile     = 'db.md';
         data.controller = './controller.js';
-        data.routes = './routes';
-        data.apiPath = './doc';
-        data.apiFile = 'api.md';
-        var template = handlebars.compile(config.docjson);
-        var result = template(data);
+        data.routes     = './routes';
+        data.apiPath    = './doc';
+        data.apiFile    = 'api.md';
         yield fs.writeFileAsync(process.cwd() + '/doc.json', result);
         break;
-      case 'showConfig':
-        if (inputinfo.value === 'n' || inputinfo.value === 'N') {
-          break;
-        }
-        var content = yield fs.readFileAsync(process.cwd() + '/doc.json', 'utf-8');
+      }
+      case 'showConfig': {
+        if (inputinfo.value === 'n' || inputinfo.value === 'N') break;
+        const content = yield fs.readFileAsync(process.cwd() + '/doc.json', 'utf-8');
         console.log('');
         console.log(config.colors.rainbow('======= doc.json ========'));
         console.log(content);
         console.log(config.colors.rainbow('==== 请继续配置详细路径 ===='));
         console.log('');
         break;
+      } 
       default:
         break;
     }
   }
-}
-function* mkdirs(str, path) {
-  var pathname = config.colors.red(path);
+};
+
+const mkdir = function (path) {
+  return new Promise((resolve, reject) => {
+    mkdirp(path, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });      
+  });
+};
+
+const mkdirs = function* (str, path) { // eslint-disable-line
+  let pathname = config.colors.red(path);
   if (Array.isArray(path)) {
     if (path.length === 2) {
       pathname = config.colors.red(path[0]) + ' 和 ' + config.colors.red(path[1]);
@@ -92,7 +93,7 @@ function* mkdirs(str, path) {
           console.log(config.colors.red(path[1]) + '创建成功');
           process.exit();
         }
-        yield mkdir(path)
+        yield mkdir(path);
         console.log(config.colors.red(path) + '创建成功');
         process.exit();
       } else if (chunk === 'n' || chunk === 'N') {
@@ -100,46 +101,39 @@ function* mkdirs(str, path) {
       }
     });
   });
-}
+};
 
-function* modifyHook(file) {
+const modifyHook = function* (file) {
   try {
-    const inputFile = process.cwd() + '/.git/hooks/prepare-commit-msg';
-    const content = yield fs.readFileAsync(file);
+    const inputFile = process.cwd() + '/.git/hooks/prepare-commit-msg',
+          content   = yield fs.readFileAsync(file);
     yield fs.writeFileAsync(inputFile, content);
     console.log('修改 ' + config.colors.red(inputFile) + ' 成功。');
   } catch (err) {
     console.warn(err);
   }
-}
+};
 
-function exists(file) {
-  return new Promise((resolve, reject) => {
+const exists = function (file) {
+  return new Promise((resolve, reject) => { // eslint-disable-line
     fs.exists(file, (exists) => {
       if (!exists) resolve(exists);
       resolve(exists);
     });
   });
-}
-function mkdir(path) {
-  return new Promise((resolve, reject) => {
-    mkdirp(path, (err) => {
-      if (err) reject(err);
-      else resolve()
-    })
-  })
-}
+};
+
 exports.initAction = function* () {
   try {
-    var docPath = yield exists(process.cwd() + '/doc.json');
+    const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
       func.initRepl(config.coverInit, arr => {
         co(newDoc(arr));
-      })
+      });
     } else {
       func.initRepl(config.newInit, arr => {
         co(newDoc(arr));
-      })
+      });
     }
   } catch (err) {
     console.warn(err);
@@ -148,18 +142,20 @@ exports.initAction = function* () {
 
 exports.showAction = function* () {
   try {
-    var docPath = yield exists(process.cwd() + '/doc.json');
+    const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
-      const doc = require(process.cwd() + '/doc.json');
-      doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
-      doc.db.schemas = func.checkPath(doc.db.schemas);
-      doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
-      doc.api.routes = func.checkPath(doc.api.routes);
-      const dbMarkdownPath = yield exists(doc.db.markdown.path);
-      const dbSchemas = yield exists(doc.db.schemas);
-      const apiController = yield exists(doc.api.controller);
-      const apiMarkdownPath = yield exists(doc.api.markdown.path);
-      const apiRouters = yield exists(doc.api.routes);
+      const doc = require(process.cwd() + '/doc.json'); // eslint-disable-line
+
+      doc.db.markdown.path   = func.checkPath(doc.db.markdown.path);
+      doc.db.schemas         = func.checkPath(doc.db.schemas);
+      doc.api.markdown.path  = func.checkPath(doc.api.markdown.path);
+      doc.api.routes         = func.checkPath(doc.api.routes);
+
+      const dbMarkdownPath   = yield exists(doc.db.markdown.path),
+            dbSchemas        = yield exists(doc.db.schemas),
+            apiController    = yield exists(doc.api.controller),
+            apiMarkdownPath  = yield exists(doc.api.markdown.path),
+            apiRouters       = yield exists(doc.api.routes);
 
       console.log(config.colors.rainbow(config.showDescription));
       console.log(config.colors.red(`
@@ -169,9 +165,9 @@ ${docPath ? '√' : 'X'}`) + `   doc.json -> ${process.cwd()}/doc.json
       console.log(config.colors.red(`${dbSchemas ? '√' : 'X'}`) + `   输入 <- ${doc.db.schemas}`);
       console.log(config.colors.red(`${dbMarkdownPath ? '√' : 'X'}`) + `   输出 -> ${doc.db.markdown.path}${doc.db.markdown.file}`);
       console.log('  api:');
-      console.log(config.colors.red(`${apiController ? '√' : 'X'}`) + `   控制 <- ${doc.api.controller}`)
-      console.log(config.colors.red(`${apiMarkdownPath ? '√' : 'X'}`) + `   输入 <- ${doc.api.routes}`)
-      console.log(config.colors.red(`${apiRouters ? '√' : 'X'}`) + `   输出 -> ${doc.api.markdown.path}${doc.api.markdown.file}`);
+      console.log(config.colors.red(`${apiController ? '√' : 'X'}`) + `   控制 <- ${doc.api.controller}`);
+      console.log(config.colors.red(`${apiRouters ? '√' : 'X'}`) + `   输入 <- ${doc.api.routes}`);
+      console.log(config.colors.red(`${apiMarkdownPath ? '√' : 'X'}`) + `   输出 -> ${doc.api.markdown.path}${doc.api.markdown.file}`);
       console.log('');
       if (!dbMarkdownPath && apiMarkdownPath) {
         yield mkdirs('db ', doc.db.markdown.path);
@@ -180,7 +176,7 @@ ${docPath ? '√' : 'X'}`) + `   doc.json -> ${process.cwd()}/doc.json
         yield mkdirs('api ', doc.api.markdown.path);
       }
       if (!apiMarkdownPath && !dbMarkdownPath) {
-        yield mkdirs('db 和 api ', [doc.db.markdown.path, doc.api.markdown.path]);
+        yield mkdirs('db 和 api ', [ doc.db.markdown.path, doc.api.markdown.path ]);
       }
       return;
     } else {
@@ -196,14 +192,14 @@ exports.runAction = function* () {
   try {
     const docPath = yield exists(process.cwd() + '/doc.json');
     if (docPath) {
-      const doc = require(process.cwd() + '/doc.json');
+      const doc = require(process.cwd() + '/doc.json'); // eslint-disable-line
       // 处理db文档
-      doc.db.markdown.path = func.checkPath(doc.db.markdown.path);
-      doc.db.schemas = func.checkPath(doc.db.schemas);
-      //yield craeteDbDoc.createDOC(doc.db.schemas, doc.db.markdown);
+      doc.db.markdown.path  = func.checkPath(doc.db.markdown.path);
+      doc.db.schemas        = func.checkPath(doc.db.schemas);
+      yield craeteDbDoc.createDOC(doc.db.schemas, doc.db.markdown);
       // 处理api文档
       doc.api.markdown.path = func.checkPath(doc.api.markdown.path);
-      doc.api.routes = func.checkPath(doc.api.routes);
+      doc.api.routes        = func.checkPath(doc.api.routes);
       yield createApiDoc.createDOC(doc.api.controller, doc.api.routes, doc.api.markdown);
     } else {
       console.warn(config.nofile);
@@ -217,10 +213,10 @@ exports.runAction = function* () {
 exports.modifyhookAction = function* () {
   try {
     console.log(config.startModifyhook);
-    const commitSamplePath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg.sample');
-    const commitPath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg');
+    const commitSamplePath = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg.sample'),
+          commitPath       = yield exists(process.cwd() + '/.git/hooks/prepare-commit-msg');
     if (!commitPath && !commitSamplePath) {
-      console.log(config.colors.red(nfig.nohook));
+      console.log(config.colors.red(config.nohook));
     } else if (commitSamplePath) {
       yield fs.renameAsync(process.cwd() + '/.git/hooks/prepare-commit-msg.sample',
         process.cwd() + '/.git/hooks/prepare-commit-msg');
@@ -234,14 +230,13 @@ exports.modifyhookAction = function* () {
 };
 
 //遍历目录文件,包括子目录
-exports.getAllFiles = getFiles;
-function* getFiles(dir) {
+const getFiles = function* (dir) {
   try {
-    var filesArr = [];
-    var files = yield fs.readdirAsync(dir);
-    for (var file of files) {
-      var pathName = dir + file;
-      var info = yield fs.statAsync(pathName);
+    let filesArr = [];
+    const files = yield fs.readdirAsync(dir);
+    for (const file of files) {
+      const pathName = dir + file,
+            info     = yield fs.statAsync(pathName);
       if (info.isDirectory()) {
         filesArr = filesArr.concat(yield getFiles(pathName + '/'));
       }
@@ -253,79 +248,69 @@ function* getFiles(dir) {
   } catch (err) {
     console.warn(err);
   }
-}
+};
+exports.getAllFiles = getFiles;
 
 exports.getRoutes = function* (file) {
-  const request = ['GET', 'POST', 'PUT', 'DELETE', 'INPUT', 'TRACE', 'OPTIONS', 'HEAD'
-    , 'get', 'post', 'put', 'delete', 'input', 'trace', 'options', 'head'];
-  var content = yield fs.readFileAsync(file);
-  var dirtyRoutes = content.toString().match(/\[.*\]/g);
-  var routes = [];
-  var data = {};
-  for (var dirtrRoute of dirtyRoutes) {
-    var result = dirtrRoute.replace(/[\[\]\s\']/g, '').split(',');
+  const request = [ 'GET', 'POST', 'PUT', 'DELETE', 'INPUT', 'TRACE', 'OPTIONS', 'HEAD'
+    , 'get', 'post', 'put', 'delete', 'input', 'trace', 'options', 'head' ];
+  const content = yield fs.readFileAsync(file);
+  const dirtyRoutes = content.toString().match(/\[.*\]/g);
+  const routes = [],
+        data = {};
+  for (const dirtrRoute of dirtyRoutes) {
+    const result = dirtrRoute.replace(/[\[\]\s\']/g, '').split(',');
     if (request.indexOf(result[0]) > -1) {
-      routes.push(result)
+      routes.push(result);
     }
   }
-  for (var route of routes) {
-    var key = route[3];
-    var value = {};
-    value.path = route[1];
+  for (const route of routes) {
+    const key   = route[3],
+          value = {};
+    value.path   = route[1];
     value.method = route[0];
-    value.group = route[2].split('.')[1] || route[2];
+    value.group  = route[2].split('.')[1] || route[2];
     data[key] = value;
   }
   return data;
 };
 
-exports.buildDoxObjs = function* (routes, files) {
-  var doxObjs = [];
-  var count = 0;
-  for (var file of files) {
-    var code = yield fs.readFileAsync(file, 'utf-8');
-    doxObjs = doxObjs.concat(dox.parseComments(code));
-    count++;
-    if (count === files.length) {
-      return filterObj(routes, doxObjs);
-    }
-  }
-}
 
-function filterObj(routes, doxObjs) {
-  var pureObjArr = {};
+
+const filterObj = function (routes, doxObjs) {
+  const pureObjArr = {};
   doxObjs.map((obj) => {
-    var key = '';
-    var value = {};
+    let key = '';
+    const value = {};
     if (obj.ctx) {
-      var params = [];
+      const params = [];
       key = obj.ctx.name.replace(/[\*]/, '');
       value.type = obj.ctx.type;
       value.description = obj.description.full;
       if (obj.tags && Array.isArray(obj.tags)) {
-        for (var tag of obj.tags) {
+        for (const tag of obj.tags) {
           if (tag.type === 'param') {
-            var param = {};
+            const param = {};
             if (/\=/.test(tag.name)) {
-              var name = tag.name.split('=');
-              tag.name = name[0];
+              const name = tag.name.split('=');
+              tag.name         = name[0];
               tag.defaultValue = name[1];
             }
-            param.name = tag.name || '';
+            param.name         = tag.name || '';
             param.defaultValue = tag.defaultValue || '';
-            param.description = tag.description || '';
-            param.type = (tag.types && Array.isArray(tag.types)) ? tag.types.join(' ') : '';
-            params.push(param)
+            param.description  = tag.description || '';
+            param.type         = (tag.types && Array.isArray(tag.types)) ? tag.types.join(' ') : '';
+            params.push(param);
             value.param = params;
           } else if (tag.type === 'example') {
             value.example = tag.html || '';
           } else if (tag.type === 'return') {
-            var returnValue = {};
+            const returnValue = {};
             returnValue.description = tag.description || '';
             returnValue.type = (tag.types && Array.isArray(tag.types)) ? tag.types.join(' ') : '';
             value.returnValue = returnValue;
           } else {
-            var other = tag.type;
+            const other = tag.type;
             value[other] = tag.string || '';
           }
         }
@@ -334,6 +319,17 @@ function filterObj(routes, doxObjs) {
     }
   });
   return pureObjArr;
-}
+};
 
-
+exports.buildDoxObjs = function* (routes, files) {
+  let doxObjs = [];
+  let count = 0;
+  for (const file of files) {
+    const code = yield fs.readFileAsync(file, 'utf-8');
+    doxObjs = doxObjs.concat(dox.parseComments(code));
+    count++;
+    if (count === files.length) {
+      return filterObj(routes, doxObjs);
+    }
+  }
+};
